@@ -1,0 +1,28 @@
+{
+  "name": "pmp_backend_project",
+  "version": "1.0.0",
+  "description": "A project management application",
+  "keywords": [
+    "Backend",
+    "API",
+    "Creation"
+  ],
+  "homepage": "https://github.com/1MONURAJBHAR/PMP-Backend-Project#readme",
+  "bugs": {
+    "url": "https://github.com/1MONURAJBHAR/PMP-Backend-Project/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1MONURAJBHAR/PMP-Backend-Project.git"
+  },
+  "license": "ISC",
+  "author": "Monu Rajbhar",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}
