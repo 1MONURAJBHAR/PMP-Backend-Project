@@ -19,6 +19,34 @@ app.use(cors({
 }));
 
 
+
+import healthCheckRouter from "./routes/healthcheck.routes.js";
+
+app.use("/api/v1/healthcheck", healthCheckRouter);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get("/", (req, res) => {  //“If someone does a GET request to the root URL, run this function.”
     console.log("Welcome to basecampy"); 
     res.send("Hello!");
