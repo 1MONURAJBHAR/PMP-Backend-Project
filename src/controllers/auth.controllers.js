@@ -164,10 +164,12 @@ const logoutUser = asyncHandler(async (req, res) => {
       new: true,
     },
   );
+
   const options = {
     httpOnly: true,
     secure: true,
   };
+
   return res
     .status(200)
     .clearCookie("accessToken", options)
@@ -184,7 +186,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 //Verify the email, After the registeration a mail is sent to you which contains the a link with unHashedToken as you click on that your unHashedToken will come here as verificationToken via params
 const verifyEmail = asyncHandler(async (req, res) => {
-  const { verificationToken } = req.params;  //This verificationToken is nothing but the unHashedToken which we sent while registering the user
+  const { verificationToken } = req.params; //This verificationToken is nothing but the unHashedToken which we sent while registering the user
 
   if (!verificationToken) {
     throw new ApiError(400, "Email verification token is missing");
@@ -193,11 +195,12 @@ const verifyEmail = asyncHandler(async (req, res) => {
   let hashedToken = crypto //hashing the verificationToken because we will find the user from database using this
     .createHash("sha256")
     .update(verificationToken)
-    .digest("hex");
+    .digest("hex"); //finalizes and gives you the result as a hexadecimal string.
 
   const user = await User.findOne({
+    //find in the "User" collection that this hashedToken exists in emailVerificationToken field or not
     emailVerificationToken: hashedToken,
-    emailVerificationExpiry: { $gt: Date.now() }, //This will Find documents where "emailVerificationExpiry" is greater than the current timestamp (Date.now()).
+    emailVerificationExpiry: { $gt: Date.now() }, //This will Find documents where "emailVerificationExpiry" is greater than the current timestamp (Date.now()). i.e:check that this hashedToken is valid or not
   });
 
   if (!user) {
@@ -284,6 +287,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const { accessToken, refreshToken: newRefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
+    /**{ accessToken, refreshToken: newRefreshToken }
+       Uses object shorthand for accessToken (field + variable are same name).
+       Uses explicit mapping for refreshToken → assigns the value of newRefreshToken into the field called refreshToken. */
+
     user.refreshToken = newRefreshToken;
     await user.save();
 
@@ -292,19 +299,19 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", newRefreshToken, options)
       .json(
-        new ApiResponse(
+        new ApiResponse( //creating an instance of your custom ApiResponse class.
           200,
           { accessToken, refreshToken: newRefreshToken },
           "Access token refreshed",
         ),
       );
   } catch (error) {
-    throw new ApiError(401, "Invalid refresh token");
+    throw new ApiError(401, {}, "Invalid refresh token");
   }
 });
 
 const forgotPasswordRequest = asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  const { email } = req.body; //if you forgot your password then provide your email in the body
 
   const user = await User.findOne({ email });
 
@@ -339,6 +346,8 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
       ),
     );
 });
+
+//After forgotPasswordRequest
 const resetForgotPassword = asyncHandler(async (req, res) => {
   const { resetToken } = req.params;
   const { newPassword } = req.body;
@@ -367,6 +376,8 @@ const resetForgotPassword = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, {}, "Password reset successfully"));
 });
+
+//Only logined user can change password 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
@@ -398,3 +409,46 @@ export {
   changeCurrentPassword,
   resetForgotPassword,
 };
+
+
+  
+  
+  
+  /**Why "hex"?
+digest() can return output in different formats:
+"hex" → hexadecimal string (most common for storage).
+"base64" → Base64-encoded string.
+No argument → raw binary buffer. */
+  
+  
+  
+  
+  
+  
+  
+  
+  
+/**Mongoose runs validation (based on your schema rules) before saving to MongoDB.
+For example, if your schema says:
+
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true },
+});
+
+
+and you try:
+const user = new User({});
+await user.save(); // ❌ ValidationError: email is required
+
+
+If you disable validation:
+user.validateBeforeSave = false;
+await user.save(); // ✅ Saves even without email
+
+Mongoose will skip running schema validators before saving. 
+
+When to use it
+You rarely want to set validateBeforeSave: false, but sometimes it’s useful:
+When you’re updating only a few fields and don’t want all validators to run.
+When importing legacy/dirty data where validation would fail.
+When you know the data is already clean.*/

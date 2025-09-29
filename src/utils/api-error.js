@@ -10,7 +10,7 @@ class ApiError extends Error{
         (this.data = null),
         (this.message = message),
         (this.success = false),
-        (this.errors = errors));
+        (this.errors = errors)); //// <-- this line assigns the errors you passed in.
 
       /**In JavaScript, every Error object has a .stack property.
          It’s a string showing where the error happened (call stack trace).
@@ -92,3 +92,24 @@ Otherwise, it auto-generates the stack for debugging.
 stack = a string showing where the error occurred.
 Error.captureStackTrace = generates a .stack trace for custom errors.
 The if lets you reuse an existing stack trace or create a new one. */
+
+/**Meaning of this.errors = errors
+this.errors → a property on your ApiError object instance.
+errors → the argument passed when creating the error (could be an array of validation error objects, or custom messages).
+So, it just stores additional error details inside the error response object, so that when you send it back in an API response, the client gets more context.
+Example usage:
+
+throw new ApiError(400, "Validation failed", [
+  { field: "email", message: "Invalid email address" },
+]);
+
+This would produce an error object with:
+
+{
+  "statusCode": 400,
+  "message": "Validation failed",
+  "success": false,
+  "errors": [
+    { "field": "email", "message": "Invalid email address" }
+  ]
+} */
