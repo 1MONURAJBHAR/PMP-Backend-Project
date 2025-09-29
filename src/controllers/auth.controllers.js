@@ -90,11 +90,26 @@ const registerUser = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
   const { email, password, username } = req.body;
 
-  if (!email) {
-    throw new ApiError(400, " email is required");
+  if (!email || !password) {
+    throw new ApiError(400, " Email & Password is required");
   }
 
   const user = await User.findOne({ email });
+
+  //if we want both username & email from user then we write this code
+  /*
+    const user1 = await User.findOne({ email });
+    const user2 = await User.findOne({ username });
+    
+    if(!user1 || !user2){
+        console.log("Email and username is required");
+     }
+    
+    // now since both user1 & user2 return the same document we can move ahead with any one document.
+   */
+
+
+
 
   if (!user) {
     throw new ApiError(400, "User does not exists");

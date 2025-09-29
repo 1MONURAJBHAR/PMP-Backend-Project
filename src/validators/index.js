@@ -27,6 +27,7 @@ const userLoginValidator = () => {
   return [
     body("email").optional().isEmail().withMessage("Email is invalid"),
     body("password").notEmpty().withMessage("Password is required"),
+    body("username").optional().notEmpty().trim().withMessage("Username is required")
   ];
 };
 

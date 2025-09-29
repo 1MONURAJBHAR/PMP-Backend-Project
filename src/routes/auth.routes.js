@@ -22,7 +22,7 @@ import {
   userResetForgotPasswordValidator,
 } from "../validators/index.js";
 
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+//import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 

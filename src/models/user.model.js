@@ -123,15 +123,17 @@ userSchema.methods.generateRefreshToken = function () {
 
 /*****************************Token without data********************** */
 //can be used for verifying the user,for reset the password etc.
-userSchema.methods.generateTemporaryToken = function () {//crypto is a 
+/** The crypto module is a built-in Node.js library that provides cryptographic functionality — things like hashing, encryption, decryption, and generating random values.
+ *  It’s widely used for authentication, password security, API tokens, and more*/
+userSchema.methods.generateTemporaryToken = function () {
     const unHashedToken = crypto.randomBytes(20).toString("hex")
-
-    const hashedToken = crypto
+    //Hashing is permanent, after hashing we cannot decrypt it
+    const hashedToken = crypto  //hasing the same unHashedToken
         .createHash("sha256")
-        .update(unHashedToken)
+        .update(unHashedToken)  
         .digest("hex")
 
-    const tokenExpiry = Date.now() + (20*60*1000) //20 mins
+    const tokenExpiry = Date.now() + (20*60*1000) //set the expiry time 20 mins ahead of current Date.now() 
   return { unHashedToken, hashedToken, tokenExpiry };
 };
 
