@@ -359,7 +359,7 @@ const resetForgotPassword = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({
     forgotPasswordToken: hashedToken,
-    forgotPasswordExpiry: { $gt: Date.now() },
+    forgotPasswordExpiry: { $gt: Date.now() }, // forgotPasswordExpiry in database should be greater then current time stamp Date.now()
   });
 
   if (!user) {

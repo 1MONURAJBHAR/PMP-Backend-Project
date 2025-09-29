@@ -26,7 +26,7 @@ import {
 
 const router = Router();
 
-// unsecured route
+// unsecured route-->not require verifyJWT
 router.route("/register").post(userRegisterValidator(), validate, registerUser);
 //This userRegisterValidator() is function & will be executed this will collect all the errors and send it to the validate middleware
 //The validate is a pure middleware ,it will not return any response, it will only validate the errors coming from userRegisterValidator(), if there is error it will thorw it before reaching it to server, and if there is no error it will simply move the request to next middleware or server & whatever there is. 
@@ -41,7 +41,7 @@ router
   .route("/reset-password/:resetToken")
   .post(userResetForgotPasswordValidator(), validate, resetForgotPassword);
 
-//secure routes
+//secure routes-->require verifyJWT
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/current-user").post(verifyJWT, getCurrentUser);
 router
