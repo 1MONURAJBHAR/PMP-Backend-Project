@@ -9,15 +9,23 @@ import mongoose from "mongoose";
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
 import { pipeline } from "nodemailer/lib/xoauth2/index.js";
 
+//Get the tasks assigned on a project.
 const getTasks = asyncHandler(async (req, res) => {
+
   const { projectId } = req.params;
-  const project = await Project.findById(projectId);
+
+  const project = await Project.findById(projectId);//find a project inside project collection whose "_id" is same as "projectId"
+
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+  //
+  
+  //Inside task collections there can be many task document whose project  "id" is same as this "projectId "
   const tasks = await Task.find({
-    project: new mongoose.Types.ObjectId(projectId),
-  }).populate("assignedTo", "avatar username fullName");
+    //many tasks can be assigned on a project
+    project: new mongoose.Types.ObjectId(projectId), //find all those tasks document whose project "id" is same as "projectId"
+  }).populate("assignedTo", "username fullName avatar");
 
   return res
     .staus(201)
@@ -36,7 +44,7 @@ const createTask = asyncHandler(async (req, res) => {
 
   const attachments = files.map((file) => {
     return {
-      url: `${process.env.SERVER_URL}/images/${file.originalname}`,
+      url: `${process.env.SERVER_URL}/${process.env.IMAGES_PATH}/${file.originalname}`,
       mimetype: file.mimetype,
       size: file.size,
     };
@@ -46,8 +54,8 @@ const createTask = asyncHandler(async (req, res) => {
     title,
     description,
     project: new mongoose.Types.ObjectId(projectId),
-    assignedTo: assignedTo
-      ? new mongoose.Types.ObjectId(assignedTo)
+    assignedTo: assignedTo // --> if there is any value in assignedTo then it will assign the project to "assignedTo"i.e:the user whom the project is assigned to, if no value in "assingnedTo" then return undefined 
+      ? new mongoose.Types.ObjectId(assignedTo)  //This is similar to if-else condition, if assignedTo is provided then assign the project to "assignedTo"i.e:whoever to whom the project is assignedTo or undefined if no value is provided in "assignedTo".
       : undefined,
     status,
     assignedBy: new mongoose.Types.ObjectId(req.user._id),
@@ -63,19 +71,19 @@ const getTaskById = asyncHandler(async (req, res) => {
   const { taskId } = req.params;
 
   const task = await Task.aggregate([
-    {
-      $match: {
+    {  //In first stage we will get the task document  
+      $match: {  //find the task document from the task collection whose _id matches to taskId.
         _id: new mongoose.Types.ObjectId(taskId),
       },
     },
-    {
+    {//Now populating the fields in task documents such as assignedTo,subtask & etc..
       $lookup: {
-        from: "users",
-        localField: "assignedTo",
+        from: "users",  //Go inside the users collection and match the "_id" of each users document with the "_id" in "assignedTo" field.
+        localField: "assignedTo", 
         foreignField: "_id",
-        as: "assignedTo",
-        pipeline: [
-          {
+        as: "assignedTo", //collect those user document to whom this task is assigned to and add it in this field "assignedTo".
+        pipeline: [ 
+          { //only select these fields from all those users document to whom this task is assignedTo or in simple words from those user documents who are in assignedTo field.
             _id: 1,
             username: 1,
             fullName: 1,
@@ -85,21 +93,21 @@ const getTaskById = asyncHandler(async (req, res) => {
       },
     },
     {
-      $lookup: {
+      $lookup: {//There can be many subtasks inside one task
         from: "subtasks",
         localField: "_id",
         foreignField: "task",
-        as: "subtasks",
-        pipeline: [
-          {
+        as: "subtasks",//There are many subtask documents inside this subtasks field, which are the subtasks of this task.
+        pipeline: [//Applying pipeline on each subtask document 
+          {//Take one by one all subtask document and attach createdBy field on each subtask document which contains info of user who created the subtask.
             $lookup: {
               from: "users",
-              localField: "createdBy",
+              localField: "createdBy", //This createdBy user contain the userId of that user who created this subtask.
               foreignField: "_id",
-              as: "createdBy",
+              as: "createdBy", //contain the user document of that user who created the subtask, this createdBy field contains the array in which the  user document is stored as object (usually only one user document).
               pipeline: [
                 {
-                  $project: {
+                  $project: {//project only these fields from user document
                     _id: 1,
                     username: 1,
                     fullName: 1,
@@ -110,8 +118,8 @@ const getTaskById = asyncHandler(async (req, res) => {
             },
           },
           {
-            $addFields: {
-              createdBy: {
+            $addFields: { //add this field to subtask document 
+              createdBy: {  //convert createdBy array to Object
                 $arrayElemAt: ["$createdBy", 0],
               },
             },
@@ -120,8 +128,8 @@ const getTaskById = asyncHandler(async (req, res) => {
       },
     },
     {
-      $addFields: {
-        assignedTo: {
+      $addFields: {   //This assigned to field is in task document
+        assignedTo: {//convert assignedTo array to object`
           $arrayElemAt: ["$assignedTo", 0],
         },
       },
@@ -136,20 +144,218 @@ const getTaskById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, task[0], "Task fetched successfully"));
 });
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 const updateTask = asyncHandler(async (req, res) => {
-  //chai
-});
+  const { taskId } = req.params;
+  const { title, description, assignedTo, status } = req.body;
+
+  if (!mongoose.isValidObjectId(taskId)) {
+    throw new ApiError(400, "Inavlid task ID");
+  }
+
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+  //update the fields which came from the documnets. Only truthy fields are updated.
+  //  Only the modified fields are will be validated, the fields which are not modified will not be validated by mongoDB
+  if (title) task.title = title;
+  if (description) task.description = description;
+  if (status) task.status = status;
+  if (assignedTo) {
+    task.assignedTo = new mongoose.Types.ObjectId(assignedTo);
+  }
+
+  await task.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, task, "Task updated successfully"));
+
+  /**You’re manually assigning only the fields that exist
+   if (title) → only assigns title if it’s provided.
+   Fields not present in req.body are not modified at all.
+   Mongoose validation
+   When you call task.save(), Mongoose only validates the fields that are set/modified in this operation.
+   Fields you didn’t touch are left as-is, so they are not re-validated. */
+
+  /*******************************************Another method using spread objects******************************************************** */
+  /** 
+  const { taskId } = req.params;
+  const { title, description, assignedTo, status } = req.body;
+
+  const updatedTask = await Task.findByIdAndUpdate(
+    taskId,
+    {
+      ...(title && { title }),
+      ...(description && { description }),
+      ...(status && { status }),
+      ...(assignedTo && { assignedTo: new mongoose.Types.ObjectId(assignedTo) }),
+    },
+    {
+      new: true, // return the updated document
+      runValidators: true, // ensure schema validation
+    }
+  );
+
+  if (!updatedTask) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedTask, "Task updated successfully"));
+
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    Why the ... is there
+    This is using object spread syntax to conditionally add properties to an object.
+    title && { title } →
+    if title is truthy → returns { title: "something" }
+    if title is falsy → returns false
+    ...(false) → ignored in object spread
+    ...({ title: "something" }) → adds title property to the final object
+     So only fields that exist in req.body are added to the update object. 
+    
+    //////////////////////////////////////////////////////////////////////////////////
+    
+    Only the fields present in the update object are modified
+
+     If title is provided → title is updated.
+     If title is not provided → it’s not included in the update object → MongoDB ignores it.
+     
+     Validation (runValidators: true)
+
+    💡 Only the fields that are actually being updated are validated against your schema.
+     Unmodified fields are not re-validated.
+    
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+}); 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const deleteTask = asyncHandler(async (req, res) => {
-  //chai
-});
+  const { taskId } = req.params;
+
+  if (!mongoose.isValidObjectId( taskId )) {
+    throw new ApiError(400, "Task Id is not valid..");
+  }
+
+  const task = await findById(taskId);
+
+  if (!task) {
+    throw new ApiError(400, "Task is not found via taskId");
+  }
+
+  //Inside Subtask collections delete all subtasks documents whose task fields "id" is matched task._id, that is delete all subtasks of this tasks
+  await Subtask.deleteMany({ task: task._id });//delete subtasks first, task._id task document's id
+  await task.deleteOne();  //delete task
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Task deleted successfully"));
+  
+
+}); 
+
 const createSubTask = asyncHandler(async (req, res) => {
-  //chai
+  const { taskId } = req.params;
+  const { title, description, status } = req.body;
+
+  if (!mongoose.isValidObjectId(taskId)) {
+    throw new ApiError(400, "Task ID is not valid");
+  }
+
+  if (!title || !description || !status) {
+    throw new ApiError(400, "Please provide all required fields such as title, description, status");
+  }
+
+
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+
+  const subtask = await Subtask.create({
+    title,
+    description,
+    status,
+    task: task._id,
+    createdBy: new mongoose.Types.ObjectId(req.user._id),
+  });
+
+ 
+  return res
+    .status(201)
+    .json(new ApiResponse(201, subtask, "Subtask created successfully"));
+
+
 });
+
+
 const updateSubTask = asyncHandler(async (req, res) => {
-  //chai
+  const { subtaskId } = req.params;
+  const { title, description, status } = req.body;
+
+  const subtask = await Subtask.findById(subtaskId);
+
+  if (!subtask) {
+    throw new ApiError(404, "Subtask not found");
+  }
+
+  const UpdateSubtask = await Subtask.findByIdAndUpdate(
+    subtaskId,
+    {
+      ...(title && { title }),
+      ...(description && { description }),
+      ...(status && { status }),
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+  /**Updates only the fields provided.
+     Validation runs only on modified fields.
+     Returns the updated document directly. */
+
+  if (!UpdateSubtask) {
+    throw new ApiError(400, "Subtask not updation failed");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, UpdateSubtask, "Subtask updated successfully"));
 });
+
+
 const deleteSubTask = asyncHandler(async (req, res) => {
-  //chai
+  const { subtaskId } = req.params;
+
+  if (!mongoose.isValidObjectId(subtaskId)) {
+    throw new ApiError(400,"Invalid subtask ID")
+  }
+
+  const delSubtask = await Subtask.findById(subtaskId);
+
+  if (!delSubtask) {
+    throw new ApiError(404, "Subtask not found");
+  }
+
+  await delSubtask.deleteOne();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Subtask deleted successfully"));
+  
 });
 
 export {
@@ -173,7 +379,7 @@ Step-by-Step Pipeline
 {
   $match: {
     _id: new mongoose.Types.ObjectId(taskId),
-  },
+   },
 }
 
 
@@ -354,3 +560,132 @@ Looks up the assigned user → attaches their details.
 Looks up all subtasks → attaches creator details for each subtask.
 Flattens arrays (assignedTo and createdBy) into objects.
 Returns a fully hydrated task object with subtasks and user info. */
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**In your .env file, just store the base server URL and maybe the base images path:
+
+SERVER_URL=http://localhost:5000
+IMAGES_PATH=/images
+
+Then in your code:
+You build the full URL dynamically:
+
+url: `${process.env.SERVER_URL}/${process.env.IMAGES_PATH}/${file.originalname}`,
+
+Example:
+.env:
+SERVER_URL=http://localhost:5000
+IMAGES_PATH=/images
+
+Code result (if file.originalname = "pic.jpg"):
+url: http://localhost:5000/images/pic.jpg */
+
+//*****************************Spread operators******************************* */
+/**What is object spread syntax?
+It’s a shorthand in JavaScript (ES2018+) that lets you copy properties from one object into another.
+
+Example:
+const obj1 = { a: 1, b: 2 };
+const obj2 = { ...obj1, c: 3 };
+
+console.log(obj2); 
+// { a: 1, b: 2, c: 3 }
+
+
+...obj1 takes all key-value pairs from obj1 and spreads them into obj2.
+
+🔎 Conditional spreading
+The trick you saw:
+
+const updateData = {
+  ...(title && { title }),
+  ...(description && { description }),
+  ...(status && { status }),
+};
+
+
+Here’s what happens step by step:
+If title = "My Task" → title && { title } evaluates to { title: "My Task" } → spread into object.
+If title = "" or undefined → title && { title } evaluates to false → spread false does nothing.
+So only the provided fields go into the final object.
+
+🔎 Why is this useful?
+It’s a clean, one-liner way to build objects where some fields are optional.
+Instead of:
+
+const updateData = {};
+if (title) updateData.title = title;
+if (description) updateData.description = description;
+if (status) updateData.status = status;
+
+
+You just do:
+
+const updateData = {
+  ...(title && { title }),
+  ...(description && { description }),
+  ...(status && { status }),
+};
+
+
+✅ In short:
+... = spread properties of an object.
+...(condition && { key: value }) = spread only if condition is true. */
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   
+  
+  /********************************Spread operators */
+  
+/**We have this expression:
+...(title && { title })
+
+
+Assume:
+
+title = "My Task";
+
+Step 1: Evaluate the logical AND (&&)
+title && { title }
+
+
+Left side: title → "My Task" → this is truthy.
+Right side: { title } → shorthand for { title: "My Task" }.
+How && works in JS:
+If the left side is truthy → return the right side.
+If the left side is falsy → return the left side.
+
+✅ So here:
+"My Task" && { title }  // → { title: "My Task" }
+Step 2: Spread into an object
+Now we have:
+
+...( { title: "My Task" } )
+
+
+Object spread (...) copies all key-value pairs into the containing object.
+
+Example:
+
+const updateData = {
+  ...( { title: "My Task" } )
+};
+console.log(updateData); 
+// { title: "My Task" }
+
+Step 3: If title is falsy
+title = undefined;
+
+...(title && { title })  // → ...(undefined && { title }) → ...undefined
+
+
+Spreading undefined does nothing, so no key is added.
+
+✅ Summary
+title value	title && { title }	Spread result in object
+
+"My Task"	{ title: "My Task"}	adds title: "My Task"
+
+undefined / ""	undefined / ""	nothing added
+
+0 / false	0 / false	nothing added
+
+This is why it’s a concise way to add only provided fields. */
