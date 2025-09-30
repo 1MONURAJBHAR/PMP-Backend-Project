@@ -66,3 +66,26 @@ export const validateProjectPermission = (roles = []) => {
     next();
   });
 };
+
+
+import { AvailableTaskStatues } from "../constants/taskStatusEnum.js"; // adjust path
+
+// Middleware to validate task status
+export const validateTaskStatus = (req, res, next) => {
+  const { status } = req.body;
+
+  // Check if status is provided
+  if (!status) {
+    return res.status(400).json({ message: "Task status is required" });
+  }
+
+  // Check if status is valid
+  if (!AvailableTaskStatues.includes(status)) {
+    return res.status(400).json({
+      message: `Invalid task status. Allowed values: ${AvailableTaskStatues.join(", ")}`,
+    });
+  }
+
+  // If valid, move to next middleware/controller
+  next();
+};

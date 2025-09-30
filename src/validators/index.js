@@ -75,6 +75,36 @@ const addMembertoProjectValidator = () => {
   ];
 };
 
+const createTheTasks = () => {
+  return [
+    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("description").notEmpty().withMessage("Description is required"),
+    body("assignedTo").notEmpty().withMessage("Provide the user details to whom the project is assigned to")
+  ];
+}
+
+const UpdateTheTask = () => {
+  return [
+    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("description").notEmpty().withMessage("Description is required"),
+    body("assignedTo").notEmpty().withMessage("Provide the user details to whom the project is assigned to")
+  ]
+}
+
+const createTheSubTask = () => {
+  return [
+    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("description").notEmpty().withMessage("Description is required"),
+  ];
+}
+const updateTheSubTask = () => {
+  return [
+    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("description").notEmpty().withMessage("Description is required"),
+  ];
+}
+
+
 export {
   userRegisterValidator,
   userLoginValidator,
@@ -83,4 +113,8 @@ export {
   userResetForgotPasswordValidator,
   createProjectValidator,
   addMembertoProjectValidator,
+  createTheTasks,
+  UpdateTheTask,
+  createTheSubTask,
+  updateTheSubTask,
 };

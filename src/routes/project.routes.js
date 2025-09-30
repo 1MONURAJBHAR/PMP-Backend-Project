@@ -36,7 +36,7 @@ router
 
 router
   .route("/:projectId")
-  .get(validateProjectPermission(AvailableUserRole), getProjectById)
+  .get(validateProjectPermission(AvailableUserRole), getProjectById) //AvailableUserRole is an array, in validateProjectPermission we will pass only an array.
   .put(
     validateProjectPermission([UserRolesEnum.ADMIN]),
     createProjectValidator(),
