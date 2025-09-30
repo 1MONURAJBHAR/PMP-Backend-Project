@@ -77,7 +77,7 @@ const addMembertoProjectValidator = () => {
 
 const createTheTasks = () => {
   return [
-    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("title").notEmpty().withMessage("Title is required").trim(),
     body("description").notEmpty().withMessage("Description is required"),
     body("assignedTo").notEmpty().withMessage("Provide the user details to whom the project is assigned to")
   ];
@@ -85,7 +85,7 @@ const createTheTasks = () => {
 
 const UpdateTheTask = () => {
   return [
-    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("title").notEmpty().withMessage("Title is required").trim(),
     body("description").notEmpty().withMessage("Description is required"),
     body("assignedTo").notEmpty().withMessage("Provide the user details to whom the project is assigned to")
   ]
@@ -93,13 +93,13 @@ const UpdateTheTask = () => {
 
 const createTheSubTask = () => {
   return [
-    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("title").notEmpty().withMessage("Title is required").trim(),
     body("description").notEmpty().withMessage("Description is required"),
   ];
 }
 const updateTheSubTask = () => {
   return [
-    body("title").notEmpty.withMessage("Title is required").trim(),
+    body("title").notEmpty().withMessage("Title is required").trim(),
     body("description").notEmpty().withMessage("Description is required"),
   ];
 }

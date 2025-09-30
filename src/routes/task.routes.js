@@ -16,6 +16,7 @@ import {
   verifyJWT,
   validateTaskStatus,
 } from "../middlewares/auth.middleware.js"; // if you have auth middleware
+
 import { validate } from "../middlewares/validator.middleware.js"; // optional validators
 
 import {
@@ -23,13 +24,15 @@ import {
   UpdateTheTask,
   createTheSubTask,
   updateTheSubTask,
-} from "./validators/index.js";
+} from "../validators/index.js";
 
 
 const router = Router();
 router.use(verifyJWT);
 
 import { upload } from "../middlewares/multer.middleware.js";
+
+import { AvailableUserRole,UserRolesEnum } from "../utils/constants.js";
 
 //------------------ Task Routes ------------------//
 
@@ -45,7 +48,7 @@ router.get(
 
 // Create a new task
 router.post(
-  "/:projectId",
+  "/createTask/:projectId",
     validateProjectPermission([UserRolesEnum.ADMIN]),
   createTheTasks(),
   validate,
@@ -55,7 +58,7 @@ router.post(
 
 // Update a task
 router.put(
-  "/task/:taskId",
+  "/updateTask/:taskId",
     validateProjectPermission([UserRolesEnum.ADMIN]),
   validateTaskStatus,
   UpdateTheTask(),
@@ -64,7 +67,7 @@ router.put(
 );
 
 // Delete a task
-router.delete("/task/:taskId", validateProjectPermission([UserRolesEnum.ADMIN]), validateTaskStatus, deleteTask);
+router.delete("/deleteTask/:taskId", validateProjectPermission([UserRolesEnum.ADMIN]), validateTaskStatus, deleteTask);
 
 //------------------ Subtask Routes ------------------//
 

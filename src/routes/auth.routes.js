@@ -56,6 +56,6 @@ router
   );
 router
   .route("/resend-email-verification")
-  .post(verifyJWT, resendEmailVerification);
+  .post(verifyJWT, resendEmailVerification); //only loggedin user can apply for resend email verification.
 
 export default router;

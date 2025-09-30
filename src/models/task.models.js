@@ -43,7 +43,7 @@ const taskSchema = new Schema(
   { timestamps: true },
 );
 
-export const Taks = mongoose.model("Task", taskSchema);
+export const Task = mongoose.model("Task", taskSchema);
 
 
 /**What runValidators: true does

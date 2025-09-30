@@ -2,6 +2,7 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
+import crypto from "crypto";
 import {
   emailVerificationMailgenContent,
   forgotPasswordMailgenContent,
@@ -26,11 +27,13 @@ const generateAccessAndRefreshTokens = async (userId) => {
   }
 };
 
-//Register a user
+//We will add the functinality of uploading avatar field in coming days till now it is not added.
+//Register a user, After registration the user can upload its avatar while doing login,
+//while doing rigistration we did not give the facility of uploading avatars, after registeration while doing login user can upload its avatars. 
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password, role } = req.body;
 
-  const existedUser = await User.findOne({
+  const existedUser = await User.findOne({ 
     $or: [{ username }, { email }],
   });
 
@@ -62,7 +65,7 @@ const registerUser = asyncHandler(async (req, res) => {
     mailgenContent: emailVerificationMailgenContent(
       user.username,
       `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`,//-->this is generation of dynamic links
-    ),   //req.protocol-->http/https, req.get("host")-->localhost or whatever the host
+    ),   //req.protocol-->http/https, req.get("host")-->localhost or whatever the host, when we make request on postman or frontend we give http/https and host info.
   });
 
     //After the creation of user in register collection mongoDB give it a default "_id" to that document, now we can access that document using this "_id"
@@ -86,7 +89,7 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 
-//Login a user
+//Login a user,//We will add the functinality of uploading avatar field in coming days till now it is not added.
 const login = asyncHandler(async (req, res) => {
   const { email, password, username } = req.body;
 
@@ -192,7 +195,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Email verification token is missing");
   }
 
-  let hashedToken = crypto //hashing the verificationToken because we will find the user from database using this
+  let hashedToken = crypto //hashing the verificationToken because we will find the user document from database using this hashedToken.
     .createHash("sha256")
     .update(verificationToken)
     .digest("hex"); //finalizes and gives you the result as a hexadecimal string.
@@ -207,6 +210,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Token is invalid or expired");
   }
 
+  //clean the fields
   user.emailVerificationToken = undefined;
   user.emailVerificationExpiry = undefined;
 
@@ -291,8 +295,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
        Uses object shorthand for accessToken (field + variable are same name).
        Uses explicit mapping for refreshToken → assigns the value of newRefreshToken into the field called refreshToken. */
 
-    user.refreshToken = newRefreshToken;
-    await user.save();
+    user.refreshToken = newRefreshToken;  
+    await user.save();  //Here mongodb only validate and update the modified fields. Just like here the modified field is "user.refreshToken" so only this field will be vallidated and updated, other fields will remain as it is mongodb won't touch them.
 
     return res
       .status(200)
@@ -301,8 +305,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse( //creating an instance of your custom ApiResponse class.
           200,
-          { accessToken, refreshToken: newRefreshToken },
-          "Access token refreshed",
+          { accessToken, refreshToken: newRefreshToken }, //here refreshToken is variable and newRefreshToken is the value 
+          "Access token refreshed",                       //since accessToken variable name and value name is same we are writing it in shorthand just like, "accessToken: accessToken" --> "accessToken"
         ),
       );
   } catch (error) {
@@ -444,7 +448,6 @@ await user.save(); // ❌ ValidationError: email is required
 If you disable validation:
 user.validateBeforeSave = false;
 await user.save(); // ✅ Saves even without email
-
 Mongoose will skip running schema validators before saving. 
 
 When to use it
@@ -452,3 +455,36 @@ You rarely want to set validateBeforeSave: false, but sometimes it’s useful:
 When you’re updating only a few fields and don’t want all validators to run.
 When importing legacy/dirty data where validation would fail.
 When you know the data is already clean.*/
+
+  
+ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**`${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
+1. req.protocol
+Provided by Express.
+It returns the protocol of the request:
+"http" if the request came through HTTP.
+"https" if it came through HTTPS.
+
+
+2. req.get("host")
+This gets the Host header from the request.
+
+Example:
+If request URL is http://localhost:5000/..., then req.get("host") will be "localhost:5000".
+If request URL is https://example.com/..., then it will be "example.com".
+
+3. Final Combined URL
+So, if:
+Request came from browser: http://localhost:5000
+Your unHashedToken = 12345
+Then the string becomes:
+
+
+http://localhost:5000/api/v1/users/verify-email/12345
+⚠️ Important Note (if behind a proxy like Nginx, Vercel, or Heroku)
+By default, req.protocol might always return "http" because proxies forward traffic.
+To fix this, you usually add in Express:
+
+
+app.set("trust proxy", 1);
+Then req.protocol will correctly return "https" when requests actually came over HTTPS. */

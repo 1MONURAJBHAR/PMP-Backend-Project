@@ -36,7 +36,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 });
 
 export const validateProjectPermission = (roles = []) => {
-  asyncHandler(async (req, res, next) => {
+  return asyncHandler(async (req, res, next) => {
     const { projectId } = req.params;
 
     if (!projectId) {
@@ -68,7 +68,7 @@ export const validateProjectPermission = (roles = []) => {
 };
 
 
-import { AvailableTaskStatues } from "../constants/taskStatusEnum.js"; // adjust path
+import { AvailableTaskStatues } from "../utils/constants.js"; // adjust path
 
 // Middleware to validate task status
 export const validateTaskStatus = (req, res, next) => {

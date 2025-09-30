@@ -1,23 +1,23 @@
 //Here we are passing the UserRolesEnum as Objects,it contains Key value pair
-export const UserRolesEnum = {
+export const UserRolesEnum = {//export in object form
     ADMIN: "admin",
     PROJECT_ADMIN: "project_admin",
     MEMBER: "member"
 }
 
 //Here we are converting UserRolesEnum object into an array AvailableUserRole containing only values of the object.
-export const AvailableUserRole = Object.values(UserRolesEnum);
+export const AvailableUserRole = Object.values(UserRolesEnum);//export in array form
 
 //So we can use any data structure array or object depending on our need.
 
 //Doing same thing as above
-export const TaskStatusEnum = {
+export const TaskStatusEnum = {//Export the object form
     TODO: "todo",
     IN_PROGRESS: "in_progress",
     DONE:"done"
 }
 
-export const AvailableTaskStatues = Object.values(TaskStatusEnum)
+export const AvailableTaskStatues = Object.values(TaskStatusEnum)//Export the array form
 
 
 export const DB_NAME = "PMP_Database"
