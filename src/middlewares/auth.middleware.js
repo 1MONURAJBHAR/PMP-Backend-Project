@@ -1,8 +1,9 @@
-import { User } from "../models/user.models.js";
+import { User } from "../models/user.model.js";
 import { ProjectMember } from "../models/projectmember.models.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import jwt from "jsonwebtoken";
+
 
 //we have to give the access token with each single request from client to server. 
 //we will send the refresh token only when the access token is expired,for refreshing the access token. 

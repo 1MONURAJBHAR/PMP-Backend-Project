@@ -12,6 +12,8 @@ import {
   verifyEmail,
 } from "../controllers/auth.controllers.js";
 
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+
 import { validate } from "../middlewares/validator.middleware.js";
 
 import {

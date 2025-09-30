@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import {
   addMembersToProject,
   createProject,
@@ -9,16 +10,20 @@ import {
   updateProject,
   deleteProject,
   updateMemberRole,
-} from "../controllers/project.controllers.js";
+} from "../controllers/project.controllers.js"
+
 import { validate } from "../middlewares/validator.middleware.js";
+
 import {
   createProjectValidator,
   addMembertoProjectValidator,
 } from "../validators/index.js";
+
 import {
   verifyJWT,
   validateProjectPermission,
 } from "../middlewares/auth.middleware.js";
+
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
 
 const router = Router();
