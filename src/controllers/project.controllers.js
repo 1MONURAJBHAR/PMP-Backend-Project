@@ -129,9 +129,17 @@ const deleteProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
   const project = await Project.findByIdAndDelete(projectId);
-  if (!project) {  //This conatains the deleted project
+
+  if (!project) {
+    //This conatains the deleted project
     throw new ApiError(404, "Project not found");
   }
+
+  // delete related members to this project,// Make sure to use correct field and ObjectId conversion
+  const deletedmembers = await ProjectMember.deleteMany({ project: new mongoose.Types.ObjectId(projectId) });
+  console.log(deletedmembers);  //This will be printed on terminal, not on postman.
+  
+
   return res
     .status(200)
     .json(new ApiResponse(200, project, "Project deleted successfully"));
@@ -146,8 +154,10 @@ const addMembersToProject = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User does not exists");
   }
 
-  await ProjectMember.findByIdAndUpdate(
-    //or u can use "findOneAndUpdate"
+  /**Quick Rules:
+    findById... → pass a single _id (string or ObjectId).
+    findOne... → pass an object filter ({ user, project }). */
+  await ProjectMember.findOneAndUpdate(   //findByIdAndUpdate expects a single "_id", not a filter object.
     {
       user: new mongoose.Types.ObjectId(user._id), //This searches for a document in the ProjectMember collection that matches the combination of this user and this project.If found, it will update the document with the new role.
       project: new mongoose.Types.ObjectId(projectId),
@@ -224,13 +234,14 @@ const getProjectMembers = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, projectMembers, "Project members fetched"));
+    .json(new ApiResponse(200, projectMembers, "Project members fetched successfully"));
 });
 
 const updateMemberRole = asyncHandler(async (req, res) => {
   const { projectId, userId } = req.params;
   const { newRole } = req.body;
-
+ 
+  
   if (!AvailableUserRole.includes(newRole)) {
     throw new ApiError(400, "Invalid Role");
   }
@@ -618,3 +629,39 @@ $match: get only ProjectMember docs for this user
 $lookup: fetch the project each membership belongs to, plus count members
 $unwind: flatten the joined project array
 $project: clean up → return only project details + user’s role */
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**CastError: Cast to ObjectId failed for value "{ user: new ObjectId('68dc14fbc9392805be2bbf23'), project: new ObjectId('68dc9dfac9b222e64d326970') }" (type Object) at path "_id" for model "ProjectMember"
+🔍 What this means
+Somewhere in your code, you’re passing an object (with { user, project }) as if it were an _id.
+
+Mongoose is trying to cast that entire object into an ObjectId for the _id field → fails → CastError.
+
+⚠️ Likely Scenario
+You’re doing something like:
+
+js
+Copy code
+await ProjectMember.findByIdAndUpdate(
+  { user: userId, project: projectId }, // ❌ WRONG: this is not an _id
+  { role: "admin" }
+);
+But findByIdAndUpdate expects a single _id, not a filter object.
+
+✅ Fix
+If you want to find by user and project, use findOneAndUpdate instead:
+
+js
+Copy code
+await ProjectMember.findOneAndUpdate(
+  { user: userId, project: projectId }, // ✅ Correct filter
+  { role: "admin" },
+  { new: true }
+);
+Or if you’re deleting:
+
+js
+Copy code
+await ProjectMember.findOneAndDelete({ user: userId, project: projectId });
+📌 Quick Rules
+findById... → pass a single _id (string or ObjectId).
+findOne... → pass an object filter ({ user, project }). */

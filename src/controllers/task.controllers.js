@@ -28,7 +28,7 @@ const getTasks = asyncHandler(async (req, res) => {
   }).populate("assignedTo", "username fullName avatar");
 
   return res
-    .staus(201)
+    .status(201)
     .json(new ApiResponse(201, tasks, "Task fetched successfully"));
 });
 
@@ -40,10 +40,16 @@ const createTask = asyncHandler(async (req, res) => {
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
-  const files = req.files || [];
+  const files = req.files || []; //req.files contain array of file objects-->[ {fileobj}, {fileobj}, {fileobj}, {fileobj} ]
+  //console.log(files);
 
   const attachments = files.map((file) => {
+    // When using memoryStorage, the file is in a buffer.
+    // You might upload this buffer to a cloud service like AWS S3 or Uploadcare.
+    // The example below assumes you save the file locally and create a URL.
     return {
+      // If you save the file, you would use the new filename/path here.
+      // For a cloud service, you would use the URL they provide.
       url: `${process.env.SERVER_URL}/${process.env.IMAGES_PATH}/${file.originalname}`,
       mimetype: file.mimetype,
       size: file.size,
@@ -54,8 +60,8 @@ const createTask = asyncHandler(async (req, res) => {
     title,
     description,
     project: new mongoose.Types.ObjectId(projectId),
-    assignedTo: assignedTo // --> if there is any value in assignedTo then it will assign the project to "assignedTo"i.e:the user whom the project is assigned to, if no value in "assingnedTo" then return undefined 
-      ? new mongoose.Types.ObjectId(assignedTo)  //This is similar to if-else condition, if assignedTo is provided then assign the project to "assignedTo"i.e:whoever to whom the project is assignedTo or undefined if no value is provided in "assignedTo".
+    assignedTo: assignedTo // --> if there is any value in assignedTo then it will assign the project to "assignedTo"i.e:the user whom the project is assigned to, if no value in "assingnedTo" then return undefined
+      ? new mongoose.Types.ObjectId(assignedTo) //This is similar to if-else condition, if assignedTo is provided then assign the project to "assignedTo"i.e:whoever to whom the project is assignedTo or undefined if no value is provided in "assignedTo".
       : undefined,
     status,
     assignedBy: new mongoose.Types.ObjectId(req.user._id),
@@ -63,7 +69,7 @@ const createTask = asyncHandler(async (req, res) => {
   });
 
   return res
-    .staus(201)
+    .status(201)
     .json(new ApiResponse(201, task, "Task created successfully"));
 });
 
@@ -84,10 +90,12 @@ const getTaskById = asyncHandler(async (req, res) => {
         as: "assignedTo", //collect those user document to whom this task is assigned to and add it in this field "assignedTo".
         pipeline: [ 
           { //only select these fields from all those users document to whom this task is assignedTo or in simple words from those user documents who are in assignedTo field.
-            _id: 1,
-            username: 1,
-            fullName: 1,
-            avatar: 1,
+            $project: {
+              _id: 1,
+              username: 1,
+              fullName: 1,
+              avatar: 1,
+            }
           },
         ],
       },
@@ -247,7 +255,7 @@ const deleteTask = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Task Id is not valid..");
   }
 
-  const task = await findById(taskId);
+  const task = await Task.findById(taskId);
 
   if (!task) {
     throw new ApiError(400, "Task is not found via taskId");
@@ -266,13 +274,13 @@ const deleteTask = asyncHandler(async (req, res) => {
 
 const createSubTask = asyncHandler(async (req, res) => {
   const { taskId } = req.params;
-  const { title, description, status } = req.body;
+  const { title} = req.body;
 
   if (!mongoose.isValidObjectId(taskId)) {
     throw new ApiError(400, "Task ID is not valid");
   }
 
-  if (!title || !description || !status) {
+  if (!title ) {
     throw new ApiError(400, "Please provide all required fields such as title, description, status");
   }
 
@@ -286,8 +294,6 @@ const createSubTask = asyncHandler(async (req, res) => {
 
   const subtask = await Subtask.create({
     title,
-    description,
-    status,
     task: task._id,
     createdBy: new mongoose.Types.ObjectId(req.user._id),
   });
@@ -303,7 +309,7 @@ const createSubTask = asyncHandler(async (req, res) => {
 
 const updateSubTask = asyncHandler(async (req, res) => {
   const { subtaskId } = req.params;
-  const { title, description, status } = req.body;
+  const { title } = req.body;
 
   const subtask = await Subtask.findById(subtaskId);
 
@@ -314,9 +320,7 @@ const updateSubTask = asyncHandler(async (req, res) => {
   const UpdateSubtask = await Subtask.findByIdAndUpdate(
     subtaskId,
     {
-      ...(title && { title }),
-      ...(description && { description }),
-      ...(status && { status }),
+      ...(title && { title }),   
     },
     {
       new: true,

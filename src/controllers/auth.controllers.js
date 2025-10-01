@@ -10,6 +10,11 @@ import {
 } from "../utils/mail.js";
 import jwt from "jsonwebtoken";
 
+
+/*************************contriller of updateprofile--> fullname, avatar etc... and notes are remaining******************************************** */
+
+
+
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -400,6 +405,8 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
+
+
 
 export {
   registerUser,

@@ -55,9 +55,14 @@ router
     addMembersToProject,
   );
 
+  router
+    .route("/getprojmembers/:projectId")
+    .get(validateProjectPermission([UserRolesEnum.ADMIN]), getProjectMembers);
+
 router
   .route("/:projectId/members/:userId")
   .put(validateProjectPermission([UserRolesEnum.ADMIN]), updateMemberRole)
   .delete(validateProjectPermission([UserRolesEnum.ADMIN]), deleteMember);
+
 
 export default router;

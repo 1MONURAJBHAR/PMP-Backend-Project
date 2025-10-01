@@ -1,5 +1,5 @@
 import { body } from "express-validator";   //body is method is taking from express-validator
-import { AvailableUserRole } from "../utils/constants.js";
+import { AvailableUserRole,AvailableTaskStatues } from "../utils/constants.js";
 
 //This will collect the errors from coming request body in an array and return the array of error to the next validator 
 const userRegisterValidator = () => { //notice here there is no "req,res,next" means it will only collect the error and send it to validator
@@ -75,32 +75,33 @@ const addMembertoProjectValidator = () => {
   ];
 };
 
-const createTheTasks = () => {
-  return [
-    body("title").notEmpty().withMessage("Title is required").trim(),
-    body("description").notEmpty().withMessage("Description is required"),
-    body("assignedTo").notEmpty().withMessage("Provide the user details to whom the project is assigned to")
-  ];
-}
+
+ const createTheTasks = () => [
+  body("title").notEmpty().withMessage("Title is required"),
+  body("description").notEmpty().withMessage("Description is required"),
+  body("assignedTo")
+    .isMongoId()
+    .withMessage("AssignedTo must be a valid user ID"),
+  body("status").isIn(AvailableTaskStatues).withMessage("Invalid status"),
+];
+
 
 const UpdateTheTask = () => {
   return [
     body("title").notEmpty().withMessage("Title is required").trim(),
     body("description").notEmpty().withMessage("Description is required"),
-    body("assignedTo").notEmpty().withMessage("Provide the user details to whom the project is assigned to")
+   body("assignedTo").isMongoId().withMessage("AssignedTo must be a valid user ID"),
   ]
 }
 
 const createTheSubTask = () => {
   return [
     body("title").notEmpty().withMessage("Title is required").trim(),
-    body("description").notEmpty().withMessage("Description is required"),
   ];
 }
 const updateTheSubTask = () => {
   return [
     body("title").notEmpty().withMessage("Title is required").trim(),
-    body("description").notEmpty().withMessage("Description is required"),
   ];
 }
 

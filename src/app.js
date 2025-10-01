@@ -30,8 +30,8 @@ import taskRouter from "./routes/task.routes.js"
 
 app.use("/api/v1/healthcheck", healthCheckRouter);// when anybody hits this -->"http://localhost:8000/api/v1/healthcheck" this will gives control to "healthCheckRouter" it will go into "./routes/healthcheck.routes.js";
 app.use("/api/v1/auth", authRouter); // when anybody hits this -->"http://localhost:8000/api/v1/auth" this will gives control to "authRouter" it will go into "./routes/auth.routes.js"
-app.use("/ap1/v1/project", projectRouter);
-app.use("/ap1/v1/task", taskRouter);
+app.use("/api/v1/project", projectRouter);
+app.use("/api/v1/task", taskRouter);
 
 
 
