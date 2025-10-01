@@ -36,65 +36,71 @@ import { AvailableUserRole,UserRolesEnum } from "../utils/constants.js";
 
 //------------------ Task Routes ------------------//
 
-// Get all tasks of a project
-router.get("/:projectId",  getTasks);
-
-// Get single task by ID
-router.get(
-  "/getTaskById/:taskId",
-  getTaskById
-);
-
-// Create a new task,✅ Solution: always put multer before validators, so that it will accept data from "form" as well as "json data" from body.
-router.post(  //when we send json data in body express.json() parses it correctly, but when we send data in form with or without files, multer parses the "files" well as "text data" in the form. 
-  "/createTask/:projectId",
-  validateProjectPermission([UserRolesEnum.ADMIN]),
-  upload.array("attachments"), // ⬅️ multer first        // field name is "attachments", so use this name while uploading files on postman,you can upload one or multiple files since it takes as an array of attachments.
-  createTheTasks(), // ⬅️ now validators see req.body
-  validate,
-  createTask,
-);
+// Get all tasks of a project, List project tasks
+router
+  .route("/:projectId")
+  .get(validateProjectPermission(AvailableUserRole), getTasks)
+  .post(
+    validateProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN, ]), //when we send json data in body express.json() parses it correctly, but when we send data in form with or without files, multer parses the "files" well as "text data" in the form
+    upload.array("attachments"), // ⬅️ multer first        // field name is "attachments", so use this name while uploading files on postman,you can upload one or multiple files since it takes as an array of attachments.
+    createTheTasks(), // ⬅️ now validators see req.body    // Create a new task,✅ Solution: always put multer before validators, so that it will accept data from "form" as well as "json data" from body.
+    validate,
+    createTask,
+  );
 
 
-
-// Update a task
-router.put(
-  "/updateTask/:taskId",
-    //validateProjectPermission([UserRolesEnum.ADMIN]),
-  validateTaskStatus,
-  UpdateTheTask(),
-  validate,
-  updateTask,
-);
-
-// Delete a task
-router.delete("/deleteTask/:taskId", deleteTask);  //validateTaskStatus,  we can add this middleware 
+// Get single task by ID, Get task details 
+router
+  .route("/:projectId/t/:taskId")
+  .get(validateProjectPermission(AvailableUserRole), getTaskById)
+  .put(  //Update a task
+    validateProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
+    upload.array("attachments"),
+    validateTaskStatus,
+    UpdateTheTask(),
+    validate,
+    updateTask,
+  )
+  .delete(  //delete a task
+    validateProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
+    deleteTask,
+  );  //validateTaskStatus,  we can add this middleware 
 
 //------------------ Subtask Routes ------------------//
 
 // Create a subtask under a task
-router.post(
-  "/subtask/:taskId",
-   createTheSubTask(),
-  validate,
-  createSubTask,
+router
+  .route("/:projectId/t/:taskId/subtasks")
+  .post( //create a subtask
+    validateProjectPermission([
+      UserRolesEnum.ADMIN,
+      UserRolesEnum.PROJECT_ADMIN,
+    ]),
+    createTheSubTask(),
+    validate,
+    createSubTask,
 );
+  
 
-// Update a subtask
-router.put(
-  "/subtask/:subtaskId",
-  updateTheSubTask(),
-  validate,
-  updateSubTask,
-);
-
-// Delete a subtask
-router.delete(
-  "/subtask/:subtaskId",
-  deleteSubTask,
-);
+router
+  .route("/:projectId/st/:subTaskId") //this projectId & subTaskId names will be stored in "req.params" so ensure while taking values/destructuring the req.params you use these names only, if you use different name it will return null & also this is same for all.  
+  .put(
+    // Update a subtask
+    validateProjectPermission(AvailableUserRole),
+    updateTheSubTask(),
+    validate,
+    updateSubTask,
+  )
+  .delete(
+    validateProjectPermission([
+      UserRolesEnum.ADMIN,
+      UserRolesEnum.PROJECT_ADMIN,
+    ]),
+    deleteSubTask,
+  ); //delete a subtask
 
 export default router;
+
 
 
 
@@ -119,3 +125,54 @@ router.post(
   validate,
   createTask,
 );*/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**What is __v?
+__v is the version key in Mongoose.
+It’s used for internal versioning of documents.
+By default, every time you update a document using certain Mongoose methods (save, findOneAndUpdate, etc.), Mongoose increments this __v value.
+
+🛠 Why does it exist?
+It’s mainly used for optimistic concurrency control (OCC).
+If two processes try to update the same document at the same time, Mongoose can use __v to detect conflicts.
+
+Example:
+
+Process A reads doc (__v: 0)
+Process B reads doc (__v: 0)
+A updates → doc becomes __v: 1
+B tries to update → Mongoose sees mismatch (expected 0 but found 1) → prevents overwriting the new data.
+✅ Example
+
+A fresh document:
+
+{
+  "_id": "651234abcd",
+  "title": "My Task",
+  "__v": 0
+}
+
+
+After an update:
+
+{
+  "_id": "651234abcd",
+  "title": "My Task Updated",
+  "__v": 1
+}
+
+🔧 Can you remove it?
+Yes, if you don’t want it:
+Disable versionKey in schema:
+
+const subTaskSchema = new Schema({
+  title: String
+}, { versionKey: false });
+
+Then documents won’t have __v.
+////////////////////////////////////////////////////////
+Or rename it (if you prefer a different field name):
+
+const subTaskSchema = new Schema({
+  title: String
+}, { versionKey: "version" }); */

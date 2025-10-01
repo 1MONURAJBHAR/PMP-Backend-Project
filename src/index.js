@@ -20,6 +20,15 @@ connectDB()
     });
 
 
+
+    /**MongoDB rule:
+Every document in MongoDB must have a unique _id field.
+The top-level document always has _id.
+If you have an array of objects (subdocuments), MongoDB/Mongoose treats each object as a “mini-document.”
+So it automatically assigns _id to each object to make them uniquely identifiable.
+Practical reason:
+You might later want to update or delete a specific file object in attachments.
+Having an _id makes it easy to do this. */
  
 
 

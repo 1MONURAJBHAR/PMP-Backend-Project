@@ -97,6 +97,18 @@ const UpdateTheTask = () => {
 const createTheSubTask = () => {
   return [
     body("title").notEmpty().withMessage("Title is required").trim(),
+    body("description")
+      .optional()
+      .isString()
+      .withMessage("Description must be a string")
+      .trim()
+      .isLength({ min: 5, max: 500 })
+      .withMessage("Description must be between 5 and 500 characters long"),
+    body("isCompleted")
+      .optional()
+      .isBoolean()
+      .withMessage("isCompleted must be a boolean")
+      .toBoolean(), //.toBoolean() → automatically converts string "true"/"false" into actual boolean.
   ];
 }
 const updateTheSubTask = () => {
@@ -119,3 +131,13 @@ export {
   createTheSubTask,
   updateTheSubTask,
 };
+
+
+/**.optional() → skips validation if the field is missing.
+.isString() → ensures it's a string when provided.
+.trim() → removes extra spaces.
+.isLength({ min, max }) → restricts size. 
+
+.optional() → skips validation if not provided.
+.isBoolean() → ensures the value is true/false (or "true"/"false" in request body).
+.toBoolean() → automatically converts string "true"/"false" into actual boolean.*/

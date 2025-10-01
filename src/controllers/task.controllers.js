@@ -176,6 +176,26 @@ const updateTask = asyncHandler(async (req, res) => {
     task.assignedTo = new mongoose.Types.ObjectId(assignedTo);
   }
 
+
+ const files = req.files || []; //req.files contain array of file objects-->[ {fileobj}, {fileobj}, {fileobj}, {fileobj} ]
+ //console.log(files);
+
+ const attachments = files.map((file) => {
+   // When using memoryStorage, the file is in a buffer.
+   // You might upload this buffer to a cloud service like AWS S3 or Uploadcare.
+   // The example below assumes you save the file locally and create a URL.
+   return {
+     // If you save the file, you would use the new filename/path here.
+     // For a cloud service, you would use the URL they provide.
+     url: `${process.env.SERVER_URL}/${process.env.IMAGES_PATH}/${file.originalname}`,
+     mimetype: file.mimetype,
+     size: file.size,
+   };
+ });
+  
+  
+  if(attachments) task.attachments = attachments;
+
   await task.save();
 
   return res
@@ -274,14 +294,14 @@ const deleteTask = asyncHandler(async (req, res) => {
 
 const createSubTask = asyncHandler(async (req, res) => {
   const { taskId } = req.params;
-  const { title} = req.body;
+  const { title, description, isCompleted } = req.body;
 
   if (!mongoose.isValidObjectId(taskId)) {
     throw new ApiError(400, "Task ID is not valid");
   }
 
   if (!title ) {
-    throw new ApiError(400, "Please provide all required fields such as title, description, status");
+    throw new ApiError(400, "Title is not provided..");
   }
 
 
@@ -294,7 +314,9 @@ const createSubTask = asyncHandler(async (req, res) => {
 
   const subtask = await Subtask.create({
     title,
+    description,
     task: task._id,
+    isCompleted,
     createdBy: new mongoose.Types.ObjectId(req.user._id),
   });
 
@@ -308,19 +330,26 @@ const createSubTask = asyncHandler(async (req, res) => {
 
 
 const updateSubTask = asyncHandler(async (req, res) => {
-  const { subtaskId } = req.params;
-  const { title } = req.body;
+  const { subTaskId } = req.params;
+  const { title, description, isCompleted } = req.body;
+  //console.log(req.params);
 
-  const subtask = await Subtask.findById(subtaskId);
+  const subtask =
+    await Subtask.findById(
+      subTaskId,
+    ); /**No need to wrap subtaskId in new ObjectId() with findById(),findById automatically converts string → ObjectId. In findOne() you must convert stringId to ObjectId by using "new mongoose.Types.ObjectId()"  like this ----> findOne({ _id: new mongoose.types.ObjectId(subtaskId) });   */
+  console.log(subtask);
 
   if (!subtask) {
     throw new ApiError(404, "Subtask not found");
   }
 
   const UpdateSubtask = await Subtask.findByIdAndUpdate(
-    subtaskId,
+    subTaskId,
     {
-      ...(title && { title }),   
+      ...(title && { title }),
+      ...(description && { description }),
+      ...(isCompleted && { isCompleted }),
     },
     {
       new: true,
@@ -329,7 +358,13 @@ const updateSubTask = asyncHandler(async (req, res) => {
   );
   /**Updates only the fields provided.
      Validation runs only on modified fields.
-     Returns the updated document directly. */
+     Returns the updated document directly.
+     By default, Mongoose schema validators only run on save(), not on update methods like findByIdAndUpdate().
+     If you don’t include runValidators: true, then Mongoose won’t check your schema rules when updating.
+     
+     Ensures data integrity when updating.
+     Prevents invalid values in your database.
+     Works for all validators: required, maxlength, min, enum, match, custom validators, etc.*/
 
   if (!UpdateSubtask) {
     throw new ApiError(400, "Subtask not updation failed");
@@ -342,13 +377,13 @@ const updateSubTask = asyncHandler(async (req, res) => {
 
 
 const deleteSubTask = asyncHandler(async (req, res) => {
-  const { subtaskId } = req.params;
+  const { subTaskId } = req.params;
 
-  if (!mongoose.isValidObjectId(subtaskId)) {
+  if (!mongoose.isValidObjectId(subTaskId)) {
     throw new ApiError(400,"Invalid subtask ID")
   }
 
-  const delSubtask = await Subtask.findById(subtaskId);
+  const delSubtask = await Subtask.findById(subTaskId);
 
   if (!delSubtask) {
     throw new ApiError(404, "Subtask not found");

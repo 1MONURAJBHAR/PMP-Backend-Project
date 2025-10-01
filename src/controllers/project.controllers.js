@@ -6,6 +6,8 @@ import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import mongoose from "mongoose";
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
+import { Task } from "../models/task.models.js";
+import { Subtask } from "../models/subtask.models.js";
 
 const getProjects = asyncHandler(async (req, res) => {
   const projects = await ProjectMember.aggregate([
@@ -128,22 +130,53 @@ const updateProject = asyncHandler(async (req, res) => {
 const deleteProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
-  const project = await Project.findByIdAndDelete(projectId);
+  if (!mongoose.isValidObjectId(projectId)) {
+    throw new ApiError(400,"Project Id is not valid")
+  }
 
+  //Delete the project
+  const project = await Project.findByIdAndDelete(projectId);
   if (!project) {
-    //This conatains the deleted project
     throw new ApiError(404, "Project not found");
   }
 
-  // delete related members to this project,// Make sure to use correct field and ObjectId conversion
-  const deletedmembers = await ProjectMember.deleteMany({ project: new mongoose.Types.ObjectId(projectId) });
-  console.log(deletedmembers);  //This will be printed on terminal, not on postman.
-  
+  //Delete related project members
+  const deletedMembers = await ProjectMember.deleteMany({
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+  console.log("Deleted members:", deletedMembers);
 
+  //Find all tasks related to this project
+  const tasks = await Task.find({
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+
+  //Delete subtasks for each task
+  const taskIds = tasks.map((task) => task._id);
+
+  const deletedSubtasks = await Subtask.deleteMany({
+    task: { $in: taskIds }, //delete all subtask documents from subtask collection whose task fields "id" matches with the taskId in taskIds array, one by one delete "all subtask documents" of all "tasks" related to the deleted project, whose id's are stored in taskIds array.
+  });
+  console.log("Deleted subtasks:", deletedSubtasks);
+
+  //Delete tasks themselves
+  const deletedTasks = await Task.deleteMany({  //Here delete all tasks related to deleted project.
+    _id: { $in: taskIds },
+  });
+  console.log("Deleted tasks:", deletedTasks);
+
+  // Return response
   return res
     .status(200)
-    .json(new ApiResponse(200, project, "Project deleted successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        project,
+        "Project and all related tasks, subtasks, and members deleted successfully",
+      ),
+    );
 });
+
 
 const addMembersToProject = asyncHandler(async (req, res) => {
   const { email, role } = req.body; //Extracts the email and role from the request body.
@@ -665,3 +698,48 @@ await ProjectMember.findOneAndDelete({ user: userId, project: projectId });
 📌 Quick Rules
 findById... → pass a single _id (string or ObjectId).
 findOne... → pass an object filter ({ user, project }). */
+
+  
+  
+  /******************************************************************************************************************************************************* */
+//code explanation//////////////////////////////////////////////////
+  
+  /**await ProjectMember.findOneAndUpdate(
+  {
+    user: new mongoose.Types.ObjectId(user._id),
+    project: new mongoose.Types.ObjectId(projectId),
+  }, // filter (search criteria)
+
+  {
+    user: new mongoose.Types.ObjectId(user._id),
+    project: new mongoose.Types.ObjectId(projectId),
+    role: role,
+  }, // update (fields to set/update)
+
+  {
+    new: true,   // return the updated (or newly created) document
+    upsert: true // create a new doc if none matches filter
+  }
+);
+🔎 How it Works
+Search Phase (filter object):
+
+{
+  user: ObjectId(user._id),
+  project: ObjectId(projectId)
+}
+It looks in the ProjectMember collection for a document where both user and project match.
+This ensures that each (user, project) pair is unique.
+Update Phase (update object):
+
+{
+  user: ObjectId(user._id),
+  project: ObjectId(projectId),
+  role: role
+}
+If a matching document is found, its role field is updated.
+If no document exists, a new one is created with user, project, and role.
+
+Options:
+new: true → You get back the updated document, not the old one.
+upsert: true → If no matching document exists, one will be inserted. */
