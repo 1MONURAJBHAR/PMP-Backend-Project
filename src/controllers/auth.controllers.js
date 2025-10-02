@@ -10,11 +10,7 @@ import {
 } from "../utils/mail.js";
 import jwt from "jsonwebtoken";
 
-
-/*************************contriller of updateprofile--> fullname, avatar etc... and notes are remaining******************************************** */
-
-
-
+//Generate access token and refresh token
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -32,9 +28,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
   }
 };
 
-//We will add the functinality of uploading avatar field in coming days till now it is not added.
-//Register a user, After registration the user can upload its avatar while doing login,
-//while doing rigistration we did not give the facility of uploading avatars, after registeration while doing login user can upload its avatars. 
+//Register a user
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password, role } = req.body;
 
@@ -94,7 +88,7 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 
-//Login a user,//We will add the functinality of uploading avatar field in coming days till now it is not added.
+//Login a user
 const login = asyncHandler(async (req, res) => {
   const { email, password, username } = req.body;
 
@@ -233,6 +227,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
   );
 });
 
+//Resend email verification
 const resendEmailVerification = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?._id);
 
@@ -265,6 +260,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Mail has been sent to your email ID"));
 });
 
+//Refresh the access token
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
@@ -319,6 +315,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+//Forgot password request
 const forgotPasswordRequest = asyncHandler(async (req, res) => {
   const { email } = req.body; //if you forgot your password then provide your email in the body
 
