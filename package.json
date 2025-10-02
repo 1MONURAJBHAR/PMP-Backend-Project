@@ -1,11 +1,13 @@
 {
-  "name": "pmp_backend_project",
+  "name": "Project Camp Backend",
   "version": "1.0.0",
-  "description": "A project management application",
+  "description": "Project Camp Backend is a RESTful API service designed to support collaborative project management.",
   "keywords": [
     "Backend",
     "API",
-    "Creation"
+    "Creation",
+    "JWT-based authentication",
+    "CORS configuration"
   ],
   "homepage": "https://github.com/1MONURAJBHAR/PMP-Backend-Project#readme",
   "bugs": {
