@@ -183,6 +183,11 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged out"));
 });
+/**Cookies are identified by name + domain + path (and sometimes secure attributes).
+If these don’t match, clearCookie() won’t remove it.
+Always use the same options when clearing as when setting. */
+
+
 
 //Get current user
 const getCurrentUser = asyncHandler(async (req, res) => {
