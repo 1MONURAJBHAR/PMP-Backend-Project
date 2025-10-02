@@ -22,6 +22,9 @@ const projectMemberSchema = new Schema(
   { timestamps: true },
 );
 
+/**enum: AvailableUserRole → only allows values that exist inside AvailableUserRole.
+If you try to save something outside this enum, Mongoose will throw a validation error. */
+
 export const ProjectMember = mongoose.model(
   "ProjectMember",
   projectMemberSchema,

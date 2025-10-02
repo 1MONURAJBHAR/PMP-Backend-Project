@@ -111,12 +111,36 @@ const createTheSubTask = () => {
       .toBoolean(), //.toBoolean() → automatically converts string "true"/"false" into actual boolean.
   ];
 }
+
 const updateTheSubTask = () => {
   return [
-    body("title").notEmpty().withMessage("Title is required").trim(),
+    body("title").optional().trim(),
+    body("description")
+      .optional()
+      .isString()
+      .withMessage("Description must be a string")
+      .trim()
+      .isLength({ min: 5, max: 500 })
+      .withMessage("Description must be between 5 and 500 characters long"),
+    body("isCompleted")
+      .optional()
+      .isBoolean()
+      .withMessage("isCompleted must be a boolean")
+      .toBoolean(),
   ];
 }
 
+const validateContentNote = () => {
+  return [
+    body("content")
+      .notEmpty()
+      .withMessage("Content is required")
+      .isLength({ min: 5, max: 500 })
+      .withMessage("Description must be between 5 and 500 characters long")
+      .trim(),
+    
+  ];
+}
 
 export {
   userRegisterValidator,
@@ -130,6 +154,7 @@ export {
   UpdateTheTask,
   createTheSubTask,
   updateTheSubTask,
+  validateContentNote,
 };
 
 
@@ -141,3 +166,8 @@ export {
 .optional() → skips validation if not provided.
 .isBoolean() → ensures the value is true/false (or "true"/"false" in request body).
 .toBoolean() → automatically converts string "true"/"false" into actual boolean.*/
+
+/**Why validators help
+Consistency: No empty or meaningless notes stored.
+Better UX: If content is too short/long, user gets a meaningful error.
+Security: Reduces chances of malicious data (e.g., someone sending empty strings or 1-character junk repeatedly). */

@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
 import { Task } from "../models/task.models.js";
 import { Subtask } from "../models/subtask.models.js";
+import { ProjectNote } from "../models/note.models.js";
 
 const getProjects = asyncHandler(async (req, res) => {
   const projects = await ProjectMember.aggregate([
@@ -73,6 +74,11 @@ const getProjects = asyncHandler(async (req, res) => {
 
 const getProjectById = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
+
+  if (!mongoose.isValidObjectId(projectId)){
+    throw new ApiError(400, "Inavlid project Id");
+  }
+
   const project = await Project.findById(projectId);
 
   if (!project) {
@@ -131,7 +137,7 @@ const deleteProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
   if (!mongoose.isValidObjectId(projectId)) {
-    throw new ApiError(400,"Project Id is not valid")
+    throw new ApiError(400, "Project Id is not valid");
   }
 
   //Delete the project
@@ -160,10 +166,20 @@ const deleteProject = asyncHandler(async (req, res) => {
   console.log("Deleted subtasks:", deletedSubtasks);
 
   //Delete tasks themselves
-  const deletedTasks = await Task.deleteMany({  //Here delete all tasks related to deleted project.
+  const deletedTasks = await Task.deleteMany({
+    //Here delete all tasks related to deleted project.
     _id: { $in: taskIds },
   });
   console.log("Deleted tasks:", deletedTasks);
+
+  // Delete the notes related to the deleted Project
+  const deleteNotes = await ProjectNote.deleteMany({
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+  console.log("Deleted notes:", deleteNotes);
+
+  /**deleteNotes will contain an object like { acknowledged: true, deletedCount: X } & same for all.
+   Make sure your controller function is async, otherwise await won’t work. */
 
   // Return response
   return res
@@ -172,7 +188,7 @@ const deleteProject = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         project,
-        "Project and all related tasks, subtasks, and members deleted successfully",
+        "Project and all related tasks, subtasks, notes, and members deleted successfully",
       ),
     );
 });
