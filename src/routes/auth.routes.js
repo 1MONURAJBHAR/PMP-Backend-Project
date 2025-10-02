@@ -10,6 +10,7 @@ import {
   resendEmailVerification,
   resetForgotPassword,
   verifyEmail,
+  uploadAvatar,
 } from "../controllers/auth.controllers.js";
 
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -24,7 +25,7 @@ import {
   userResetForgotPasswordValidator,
 } from "../validators/index.js";
 
-//import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
@@ -57,5 +58,13 @@ router
 router
   .route("/resend-email-verification")
   .post(verifyJWT, resendEmailVerification); //only loggedin user can apply for resend email verification.
+
+// Route to upload avatar
+router
+  .route("/upload-avatar")
+  .post(verifyJWT, upload.single("avatar"),uploadAvatar);
+
+
+
 
 export default router;

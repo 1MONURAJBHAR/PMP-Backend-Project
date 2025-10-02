@@ -9,6 +9,10 @@ import {
   sendEmail,
 } from "../utils/mail.js";
 import jwt from "jsonwebtoken";
+import path from "path";
+
+
+
 
 //Generate access token and refresh token
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -30,7 +34,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 //Register a user
 const registerUser = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
+  const { email, username, password, role, fullName } = req.body;
 
   const existedUser = await User.findOne({ 
     $or: [{ username }, { email }],
@@ -43,6 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({
     email,
     password,
+    fullName,
     username,
     isEmailVerified: false,
   });
@@ -404,6 +409,43 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 
+//Upload the avatar 
+ const uploadAvatar = asyncHandler(async (req, res) => {
+  const userId = req.user._id; // ✅ userId from auth middleware (assuming user is logged in)
+
+  if (!req.file) {
+    throw new ApiError(400, "No avatar file uploaded");
+  }
+
+  const localPath = req.file.path; // e.g., "public\images\1759402117967-images.jpeg"
+
+  // Normalize for URL
+  const normalizedPath = localPath.split(path.sep).join("/");
+
+  // Construct URL
+  const url = `${req.protocol}://${req.get("host")}/${normalizedPath}`;
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      avatar: {
+        url,
+        localPath,
+      },
+    },
+    { new: true },
+  ).select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { avatar: user.avatar },  //avatar is varible, user.avatar is value from user document.
+        "Avatar uploaded successfully",
+      ),
+    );
+});
 
 export {
   registerUser,
@@ -416,6 +458,7 @@ export {
   forgotPasswordRequest,
   changeCurrentPassword,
   resetForgotPassword,
+  uploadAvatar,
 };
 
 
