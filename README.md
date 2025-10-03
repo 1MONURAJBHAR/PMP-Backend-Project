@@ -154,7 +154,23 @@ Project Camp Backend is a RESTful API service designed to support collaborative 
 - `in_progress` - Task currently being worked on
 - `done` - Task completed
 
-### 5.🔒 Security Features
+
+### 5. Logger: Morgan + Winston Integration 
+- **Morgan:** Middleware to log incoming HTTP requests.
+- **Winston:** General-purpose logger to store logs with timestamps, levels, and optional JSON formatting.
+
+- Logs all HTTP requests with method, URL, status, and response time.
+
+- Stores logs in JSON format, making them easy to parse and analyze.
+
+- Provides timestamps for every log entry.
+
+- Transports to server app.log file and console it to terminal
+
+
+
+
+### 6.🔒 Security Features
 
 - JWT-based authentication with refresh tokens
 - Role-based authorization middleware
@@ -164,14 +180,14 @@ Project Camp Backend is a RESTful API service designed to support collaborative 
 - File upload security with Multer middleware
 - CORS configuration for cross-origin requests
 
-### 6.📁 File Management
+### 7.📁 File Management
 
 - Support for multiple file attachments on tasks
 - Files stored in public/images directory
 - File metadata tracking (URL, MIME type, size)
 - Secure file upload handling
 
-### 7.🎯 Success Criteria
+### 8.🎯 Success Criteria
 
 - Secure user authentication and authorization system
 - Complete project lifecycle management
