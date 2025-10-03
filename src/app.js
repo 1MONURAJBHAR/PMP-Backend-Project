@@ -6,27 +6,36 @@ const app = express();
 
 /********************************************************************************************************** */
 //Using winston & morgan loggers
+//Morgan intercepts every request and logs it using the format we defined.
 import logger from "./utils/loggers.js";
 import morgan from "morgan";
 
-const morganFormat = ":method :url :status :response-time ms";
+const morganFormat = ":method :url :status :response-time ms";  //morgan fromats the http request in this format.
 
+//app.use() → Adds Morgan as middleware in Express.
 app.use(
   morgan(morganFormat, {
-    stream: {
+    stream: {           //stream.write()--> receives the formatted string (message) from morgan and parses the string into a structured object & then sent it to winston.
       write: (message) => {
         const logObject = {
+          //Convert the raw string log into a structured JSON object.
           method: message.split(" ")[0],
           url: message.split(" ")[1],
           status: message.split(" ")[2],
           responseTime: message.split(" ")[3],
         };
-        logger.info(JSON.stringify(logObject));
+        logger.info(JSON.stringify(logObject)); // Converts the JavaScript object into a string because Winston logs strings & after that it sent it to winston at info level.
       },
     },
   }),
 );
 
+/**logger is your Winston logger instance supports info,error,warn,debug & etc */
+
+
+
+/**This will log the messages to the console and the file app.log.
+ *  The morgan package is used to format the log messages and the stream option is used to write the log messages to the console. */
 /****************************************************************************************************************** */
 
 //Basic configurations  //app.use()--->  Used for middleware
