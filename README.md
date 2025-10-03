@@ -2,6 +2,8 @@
 
 ## 🚀 Project Camp Backend
 
+[Model Link](https://app.eraser.io/workspace/YrH5ZFPlighkdAiY5nch?origin=share)
+
 ### 1️⃣ 1. Product Overview
 
 **Product Name:** Project Camp Backend  
