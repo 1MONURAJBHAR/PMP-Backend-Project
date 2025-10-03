@@ -4,6 +4,30 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
+/********************************************************************************************************** */
+//Using winston & morgan loggers
+import logger from "./utils/loggers.js";
+import morgan from "morgan";
+
+const morganFormat = ":method :url :status :response-time ms";
+
+app.use(
+  morgan(morganFormat, {
+    stream: {
+      write: (message) => {
+        const logObject = {
+          method: message.split(" ")[0],
+          url: message.split(" ")[1],
+          status: message.split(" ")[2],
+          responseTime: message.split(" ")[3],
+        };
+        logger.info(JSON.stringify(logObject));
+      },
+    },
+  }),
+);
+
+/****************************************************************************************************************** */
 
 //Basic configurations  //app.use()--->  Used for middleware
 /**JSON (JavaScript Object Notation) is a lightweight, text-based data interchange format used to store and transmit structured data */
@@ -34,22 +58,6 @@ app.use("/api/v1/auth", authRouter); // when anybody hits this -->"http://localh
 app.use("/api/v1/project", projectRouter);
 app.use("/api/v1/task", taskRouter);
 app.use("/api/v1/note", noteRouter);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
